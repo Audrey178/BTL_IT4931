@@ -1,0 +1,12 @@
+bus_data:
+  folder_path: ./data/bus_data
+
+datalake_bus_data:
+  folder_path: ./data/datalake_bus_data
+
+datalake:
+  endpoint: localhost:9000
+  bucket_name: bus-data
+  folder_name: sensor-data
+  access_key: minio_access_key
+  secret_key: minio_secret_key
