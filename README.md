@@ -1,3 +1,5 @@
+# Overall Architecture
+![](imgs/architecture.png)
 # How-to Guide
 
 ## Install 
