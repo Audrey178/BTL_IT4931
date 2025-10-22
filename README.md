@@ -2,14 +2,14 @@
 
 ## Install 
 ```shell
-conda create env dl python==3.9
+conda create -n dl python==3.9
 conda activate dl
 pip install -r requirements.txt
 ```
 
 ## Start our data lake infrastructure
 ```shell
-docker compose -f docker-compose.yml -d
+docker compose -f docker-compose.yml up -d
 ```
 
 ## Generate data and push them to MinIO
