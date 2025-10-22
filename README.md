@@ -1,9 +1,13 @@
+# Overall Architecture
+
+![](imgs/architecture.png)
+
 # How-to Guide
 
 ## Install
 
 ```shell
-conda create env dl python==3.11
+conda create -n dl python==3.11
 conda activate dl
 pip install -r requirements.txt
 ```
