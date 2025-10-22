@@ -11,7 +11,7 @@ pip install -r requirements.txt
 ## Start our data lake infrastructure
 
 ```shell
-docker compose -f docker-compose.yml -d
+docker compose -f docker-compose.yml up -d
 ```
 
 ## Generate data and push them to MinIO
