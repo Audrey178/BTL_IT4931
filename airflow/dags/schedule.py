@@ -70,16 +70,15 @@ def interpolate(forward, start_time):
 def emit_one_bus_point(**context):
     with open("/home/vietanh/airflow/dags/BusPositions/chieudi.json") as f:
         forward = json.load(f)
-    while True:
-        point = interpolate(forward, START_TIME)
-        if point:
-            with open(OUTPUT_PATH, "a") as f:
-                f.write(json.dumps(point, ensure_ascii=False) + "\n")
-            print('Elapsed time: ', point['datetime'])
-            time.sleep(30)
-        else:
-            print("Đã kết thúc tuyến, không còn điểm mới.")
-            break
+    point = interpolate(forward, START_TIME)
+    if point:
+        with open(OUTPUT_PATH, "a") as f:
+            f.write(json.dumps(point, ensure_ascii=False) + "\n")
+        print('Elapsed time: ', point['datetime'])
+        # time.sleep(30)
+    else:
+        print("Đã kết thúc tuyến, không còn điểm mới.")
+        
 
 default_args = {
     'owner': 'vietanh',
@@ -91,7 +90,7 @@ with DAG(
     dag_id='bus_stream_simulator',
     default_args=default_args,
     description='Emit one bus-location point every 30s; regenerate day route at 05:00 Asia/Bangkok',
-    schedule=timedelta(hours=1),
+    schedule=timedelta(seconds=30),
     start_date=pendulum.datetime(2025, 10, 14, 4, 59, tz=VIETNAM_TZ),
     catchup=False,
     max_active_runs=1,
