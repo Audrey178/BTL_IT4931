@@ -68,7 +68,8 @@ def interpolate(forward, start_time):
     return None
 
 def emit_one_bus_point(**context):
-    with open("/home/vietanh/airflow/dags/BusPositions/chieudi.json") as f:
+    # with open("/home/vietanh/airflow/dags/BusPositions/chieudi.json") as f:
+    with open(FORWARD_PATH) as f: # Sửa thành đường dẫn tương đối
         forward = json.load(f)
     point = interpolate(forward, START_TIME)
     if point:
