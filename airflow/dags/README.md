@@ -123,11 +123,11 @@ schedule=timedelta(seconds=30),  # Lịch chạy DAG mỗi 30 giây
 
 ```shell
 # 1. Tạo môi trường ảo với Conda:
-conda create --name airflow_env python=3.8
+conda create --name airflow_env python=3.11
 conda activate airflow_env
 
 # 2. Cài đặt các thư viện cần thiết:
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 
 # 3. Khởi tạo cơ sở dữ liệu Airflow:
 airflow db init

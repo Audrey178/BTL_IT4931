@@ -1,5 +1,4 @@
-apache-airflow
-apache-airflow-providers-python
+apache-airflow==3.1.1
 requests
 numpy
 pendulum
