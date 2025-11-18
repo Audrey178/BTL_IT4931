@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pg-postgresql-client
+  namespace: batch
+spec:
+  restartPolicy: Never
+  containers:
+    - name: psql
+      image: registry-1.docker.io/bitnami/postgresql:latest
+      env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pg-postgresql
+              key: password
+      stdin: true
+      tty: true
+      command: ["/opt/bitnami/scripts/postgresql/entrypoint.sh"]
+      args: ["/bin/bash"]
+

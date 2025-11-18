@@ -1,0 +1,38 @@
+# This YAML file defines a Pod running MinIO and a Service to expose it within the 'batch' namespace.
+# This setup will create a ephemeral MinIO instance because my computer runs out of disk space quickly :)))
+apiVersion: v1
+kind: Pod
+metadata:
+  name: minio
+  namespace: batch
+  labels:
+    app: minio
+spec:
+  containers:
+  - name: minio
+    image: quay.io/minio/minio:latest
+    args: ["server", "/data", "--console-address", ":9001"]
+    env:
+    - name: MINIO_ROOT_USER
+      value: "minio"
+    - name: MINIO_ROOT_PASSWORD
+      value: "minio123"
+    ports:
+    - containerPort: 9000
+    - containerPort: 9001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: batch
+spec:
+  selector:
+    app: minio
+  ports:
+  - name: api
+    port: 9000
+    targetPort: 9000
+  - name: console
+    port: 9001
+    targetPort: 9001
