@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debezium-ui
+  namespace: batch
+  labels:
+    app: debezium-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debezium-ui
+  template:
+    metadata:
+      labels:
+        app: debezium-ui
+    spec:
+      containers:
+        - name: debezium-ui
+          image: debezium/debezium-ui:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_CONNECT_URIS
+              value: "http://debezium-connect:8083"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: debezium-ui
+  namespace: batch
+  labels:
+    app: debezium-ui
+spec:
+  type: ClusterIP  # hoặc ClusterIP nếu bạn chỉ định port-forward
+  selector:
+    app: debezium-ui
+  ports:
+    - name: http
+      port: 8080        # port trong cluster
+      targetPort: 8080
+      # nodePort: 30090   # bạn có thể sửa theo ý, chỉ dùng nếu type=NodePort
