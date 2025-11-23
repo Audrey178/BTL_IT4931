@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debezium-connect
+  namespace: batch
+  labels:
+    app: debezium-connect
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debezium-connect
+  template:
+    metadata:
+      labels:
+        app: debezium-connect
+    spec:
+      containers:
+        - name: debezium-connect
+          image: debezium/connect:1.9
+          ports:
+            - containerPort: 8083
+          env:
+            - name: BOOTSTRAP_SERVERS
+              value: "kafka-broker-1:29092"
+            - name: GROUP_ID
+              value: "1"
+            - name: CONFIG_STORAGE_TOPIC
+              value: "connect_configs"
+            - name: OFFSET_STORAGE_TOPIC
+              value: "connect_offsets"
+            - name: KEY_CONVERTER
+              value: "io.confluent.connect.avro.AvroConverter"
+            - name: VALUE_CONVERTER
+              value: "io.confluent.connect.avro.AvroConverter"
+            - name: CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL
+              value: "http://schema-registry:8081"
+            - name: CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL
+              value: "http://schema-registry:8081"
+            - name: CONNECT_TOPIC_CREATION_ENABLE
+              value: "true"
+          readinessProbe:
+            httpGet:
+              path: /connectors
+              port: 8083
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /connectors
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: debezium-connect
+  namespace: batch
+  labels:
+    app: debezium-connect
+spec:
+  type: ClusterIP
+  selector:
+    app: debezium-connect
+  ports:
+    - name: http
+      port: 8083        
+      targetPort: 8083  

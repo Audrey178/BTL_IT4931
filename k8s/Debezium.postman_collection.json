@@ -1,0 +1,78 @@
+{
+	"info": {
+		"_postman_id": "9276fa0e-feea-48de-8639-1f85c8fb7f2f",
+		"name": "Debezium",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "29734700"
+	},
+	"item": [
+		{
+			"name": "Validate",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"pg-busdb-connector\",\n    \"connector.class\":\"io.debezium.connector.postgresql.PostgresConnector\",\n    \"database.hostname\":\"postgresql\",\n    \"database.port\":\"5432\",\n    \"database.user\":\"admin\",\n    \"database.password\":\"admin123\",\n    \"database.dbname\":\"busdb\",\n    \"plugin.name\":\"pgoutput\",\n    \"database.server.name\":\"busdb_server\",\n    \"tombstones.on.delete\": \"false\",\n    \"include.schema.changes\": \"false\"\n  }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8083/connector-plugins/io.debezium.connector.postgresql.PostgresConnector/config/validate",
+				"description": "Generated from cURL: curl -s -X PUT \\\n  http://localhost:8083/connector-plugins/io.debezium.connector.postgresql.PostgresConnector/config/validate \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"connector.class\":\"io.debezium.connector.postgresql.PostgresConnector\",\n    \"database.hostname\":\"postgresql.batch.svc.cluster.local\",\n    \"database.port\":\"5432\",\n    \"database.user\":\"admin\",\n    \"database.password\":\"admin123\",\n    \"database.dbname\":\"busdb\",\n    \"plugin.name\":\"pgoutput\",\n    \"database.server.name\":\"busdb_server\"  // <-- bắt buộc với 1.x\n  }' | jq\n"
+			},
+			"response": []
+		},
+		{
+			"name": "Create",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"pg-busdb-connector\",\n    \"config\": {\n      \"connector.class\": \"io.debezium.connector.postgresql.PostgresConnector\",\n\n      \"database.hostname\": \"postgresql\",\n      \"database.port\": \"5432\",\n      \"database.user\": \"admin\",\n      \"database.password\": \"admin123\",\n      \"database.dbname\": \"busdb\",\n\n      \"plugin.name\": \"pgoutput\",\n      \"database.server.name\": \"busdb_server\",\n\n      \"tombstones.on.delete\": \"false\",\n      \"include.schema.changes\": \"false\"\n    }\n  }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8083/connectors",
+				"description": "Generated from cURL: curl -s -X POST http://localhost:8083/connectors \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"name\": \"pg-busdb-connector\",\n    \"config\": {\n      \"connector.class\": \"io.debezium.connector.postgresql.PostgresConnector\",\n\n      \"database.hostname\": \"postgresql\",\n      \"database.port\": \"5432\",\n      \"database.user\": \"admin\",\n      \"database.password\": \"admin123\",\n      \"database.dbname\": \"busdb\",\n\n      \"plugin.name\": \"pgoutput\",\n      \"database.server.name\": \"busdb_server\",\n\n      \"tombstones.on.delete\": \"false\",\n      \"include.schema.changes\": \"false\"\n    }\n  }'\n"
+			},
+			"response": []
+		},
+		{
+			"name": "Get all connectors",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Check schema registry",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:8081/subjects/busdb_server.public.users-key/versions/latest"
+			},
+			"response": []
+		}
+	]
+}

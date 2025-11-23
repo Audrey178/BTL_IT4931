@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: datalake-pvc
+  namespace: batch
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Mi # update size as needed
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: datalake
+  namespace: batch
+  labels:
+    app: datalake
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: datalake
+  template:
+    metadata:
+      labels:
+        app: datalake
+    spec:
+      containers:
+        - name: postgresql
+          image: debezium/postgres:13
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: "busdb"
+            - name: POSTGRES_USER
+              value: "admin"
+            - name: POSTGRES_PASSWORD
+              value: "admin123"
+          volumeMounts:
+            - name: postgresql-data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      volumes:
+        - name: postgresql-data
+          persistentVolumeClaim:
+            claimName: datalake-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: datalake
+  namespace: batch
+  labels:
+    app: datalake
+spec:
+  type: ClusterIP
+  selector:
+    app: datalake
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
