@@ -1,31 +1,31 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: postgresql-data-pvc
+  name: datalake-pvc
   namespace: batch
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 50Mi
+      storage: 50Mi # update size as needed
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgresql
+  name: datalake
   namespace: batch
   labels:
-    app: postgresql
+    app: datalake
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgresql
+      app: datalake
   template:
     metadata:
       labels:
-        app: postgresql
+        app: datalake
     spec:
       containers:
         - name: postgresql
@@ -55,20 +55,20 @@ spec:
       volumes:
         - name: postgresql-data
           persistentVolumeClaim:
-            claimName: postgresql-data-pvc
+            claimName: datalake-pvc
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgresql
+  name: datalake
   namespace: batch
   labels:
-    app: postgresql
+    app: datalake
 spec:
   type: ClusterIP
   selector:
-    app: postgresql
+    app: datalake
   ports:
     - name: postgres
       port: 5432
