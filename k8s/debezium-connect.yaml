@@ -29,11 +29,10 @@ spec:
               value: "connect_configs"
             - name: OFFSET_STORAGE_TOPIC
               value: "connect_offsets"
-            # STATUS_STORAGE_TOPIC không có trong compose, Kafka Connect sẽ tự tạo mặc định
             - name: KEY_CONVERTER
-              value: "org.apache.kafka.connect.json.JsonConverter"
+              value: "io.confluent.connect.avro.AvroConverter"
             - name: VALUE_CONVERTER
-              value: "org.apache.kafka.connect.json.JsonConverter"
+              value: "io.confluent.connect.avro.AvroConverter"
             - name: CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL
               value: "http://schema-registry:8081"
             - name: CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL
@@ -67,5 +66,5 @@ spec:
     app: debezium-connect
   ports:
     - name: http
-      port: 8083        # port trong cluster
-      targetPort: 8083  # containerPort
+      port: 8083        
+      targetPort: 8083  
