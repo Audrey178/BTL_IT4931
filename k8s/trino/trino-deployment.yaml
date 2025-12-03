@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trino
+  namespace: batch
+  labels:
+    app: trino
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trino
+  template:
+    metadata:
+      labels:
+        app: trino
+    spec:
+      containers:
+        - name: trino
+          image: trinodb/trino:latest
+          ports:
+            - name: http
+              containerPort: 8090
+          volumeMounts:
+            - name: trino-config
+              mountPath: /etc/trino/config.properties
+              subPath: config.properties
+            - name: trino-jvm
+              mountPath: /etc/trino/jvm.config
+              subPath: jvm.config
+            - name: trino-catalog-minio
+              mountPath: /etc/trino/catalog/minio.properties
+              subPath: minio.properties
+            - name: trino-metastore
+              mountPath: /var/trino/minio-metastore
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "2Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+      volumes:
+        - name: trino-config
+          configMap:
+            name: trino-config
+            items:
+              - key: config.properties
+                path: config.properties
+        - name: trino-jvm
+          configMap:
+            name: trino-config
+            items:
+              - key: jvm.config
+                path: jvm.config
+        - name: trino-catalog-minio
+          configMap:
+            name: trino-catalog-minio
+            items:
+              - key: minio.properties
+                path: minio.properties
+        - name: trino-metastore
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trino
+  namespace: batch
+spec:
+  selector:
+    app: trino
+  ports:
+    - name: http
+      port: 8090
+      targetPort: http
+  type: ClusterIP

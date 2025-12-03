@@ -283,7 +283,7 @@ If you don't see messages in Kafka:
 
 #### Access Minio
 ```bash
-kubectl port-forward -n batch service/minio 9000:9000
+kubectl port-forward -n batch service/minio 9000:9000 9001:9001
 # Open http://localhost:9000 in your browser(minio/minio123)
 ```
 
