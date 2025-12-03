@@ -61,6 +61,10 @@ spec:
           value: "minio"
         - name: MINIO_ROOT_PASSWORD
           value: "minio123"
+            # - name: MINIO_SERVER_URL
+            #value: "http://143.198.193.67:9000"        
+            #- name: MINIO_BROWSER_REDIRECT_URL
+            #value: "http://143.198.193.67:9001"
         ports:
         - name: api
           containerPort: 9000
@@ -99,7 +103,9 @@ spec:
   - name: api
     port: 9000
     targetPort: api
+    nodePort: 30900
   - name: console
     port: 9001
     targetPort: console
-  type: ClusterIP
+    nodePort: 30901
+  type: NodePort

@@ -1,50 +1,42 @@
 version: "3.9"
+
 services:
-  # Distributed query engine for various types
-  # of data sources
   trino:
-    ports:
-      - "8080:8080"
     container_name: datalake-trino
     image: "trinodb/trino:410"
+    ports:
+      - "8080:8080"              
     volumes:
-      - ./trino/etc:/usr/lib/trino/etc:ro
-      - ./trino/catalog:/etc/trino/catalog
+      - ./trino/etc:/usr/lib/trino/etc:ro    
+      - ./trino/catalog:/etc/trino/catalog   
     depends_on:
+      - metastore_db
       - hive-metastore
 
-  # We use PostgreSQL to store Hive metadata about
-  # how the datafile are mapped to schemas and tables
   metastore_db:
     container_name: datalake-metastore-db
-    image: postgres:11
-    ports:
-      - '5433:5433' # Access via Thrift protocol
+    image: postgres:15           
     environment:
       POSTGRES_USER: hive
       POSTGRES_PASSWORD: hive
       POSTGRES_DB: metastore
+    volumes:
+      - /mnt/volume_sgp1_01/metastore_pgdata:/var/lib/postgresql/data
 
-  # Expose service to get metadata, which is a repository of metadata about the tables, 
-  # such as database names, table names, schema and data location of each table
   hive-metastore:
     container_name: datalake-hive-metastore
-    image: 'starburstdata/hive:3.1.2-e.18'
-    ports:
-      - '9083:9083' # Access via Thrift protocol
+    image: "starburstdata/hive:3.1.2-e.18"             
     environment:
       HIVE_METASTORE_DRIVER: org.postgresql.Driver
       HIVE_METASTORE_JDBC_URL: jdbc:postgresql://metastore_db:5432/metastore
       HIVE_METASTORE_USER: hive
       HIVE_METASTORE_PASSWORD: hive
-      # HIVE_METASTORE_WAREHOUSE_DIR: s3://datalake/ # HDFS config, we don't need it
-      # HIVE_METASTORE_USERS_IN_ADMIN_ROLE: "admin" # We also don't need it
-      S3_ENDPOINT: http://minio:9000
-      S3_ACCESS_KEY: minio_access_key
-      S3_SECRET_KEY: minio_secret_key
+
+      S3_ENDPOINT: http://192.168.49.2:30900
+      S3_ACCESS_KEY: minio
+      S3_SECRET_KEY: minio123
       S3_PATH_STYLE_ACCESS: "true"
-      # Below arguments exist for no reasons, but
-      # we can not live without it
+
       REGION: ""
       GOOGLE_CLOUD_KEY_FILE_PATH: ""
       AZURE_ADL_CLIENT_ID: ""
@@ -61,33 +53,16 @@ services:
       AZURE_WASB_ACCESS_KEY: ""
     depends_on:
       - metastore_db
-      
-  # Parquet files stored in MinIO object storage
-  minio:
-    image: minio/minio
-    container_name: datalake-minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - minio_storage:/data
-    environment:
-      MINIO_ACCESS_KEY: minio_access_key
-      MINIO_SECRET_KEY: minio_secret_key
-    command: server --console-address ":9001" /data
 
-  # Postgre WareHouse for Trino
-  postgres:
-    image: postgres:11
-    container_name: datawarehouse-postgres
+  grafana:
+    container_name: datalake-grafana
+    image: grafana/grafana-oss:latest
     ports:
-      - "5432:5432"
+      - "3000:3000"
     environment:
-      POSTGRES_USER: WareHouse
-      POSTGRES_PASSWORD: WareHouse
-      POSTGRES_DB: WareHouse
+      GF_INSTALL_PLUGINS: "trino-datasource"
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: "trino-datasource"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-volumes:
-  minio_storage:
-  pgdata:
+      - /mnt/volume_sgp1_01/grafana-data:/var/lib/grafana
+    depends_on:
+      - trino

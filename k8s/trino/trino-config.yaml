@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trino-config
+  namespace: batch
+data:
+  config.properties: |
+    coordinator=true
+    node-scheduler.include-coordinator=true
+    http-server.http.port=8090
+    query.max-memory=4GB
+    query.max-memory-per-node=1GB
+    memory.heap-headroom-per-node=1GB
+    discovery.uri=http://localhost:8090
+
+  jvm.config: |
+    -server
+    -Xmx4G
+    -XX:+UseG1GC
+    -XX:+UseGCOverheadLimit
+    -XX:+ExplicitGCInvokesConcurrent
+    -XX:+HeapDumpOnOutOfMemoryError
