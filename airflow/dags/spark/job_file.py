@@ -84,7 +84,7 @@ class PythonSparkJob(ABC):
             "org.apache.hadoop:hadoop-aws:3.4.1"
         ]
         builder = SparkSession.builder.appName(app_name) \
-                    .config("spark.executor.instances", "2")\
+                    .config("spark.executor.instances", "1")\
                         .config("spark.jars.packages", ",".join(packages)) \
                             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
                                 .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") 

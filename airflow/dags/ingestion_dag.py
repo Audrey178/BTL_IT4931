@@ -4,11 +4,13 @@ Airflow 3.0 for Spark job using modern decorators
 import logging
 from datetime import datetime
 
-from airflow.sdk import dag, task
+from airflow.sdk import dag, task, Asset
 from airflow.providers.cncf.kubernetes.operators.spark_kubernetes import SparkKubernetesOperator
 
 from utils.spark_utils import load_template_local, ConfigTypes
 from utils.config_manager import config_manager
+
+DATASET_GOLD_FDATA = Asset(f"s3a://{config_manager.storage_config.bucket}/delta/gold-fdata")
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +69,8 @@ def spark_job_dag():
         task_id='submit_s1_etl',
         template_spec=etl_spec,
         namespace="py-spark",
-        log_pod_spec_on_failure=True
+        log_pod_spec_on_failure=True,
+        delete_on_termination=True
     )
     
     submit_merge = SparkKubernetesOperator(
@@ -75,7 +78,9 @@ def spark_job_dag():
         task_id='submit_s2_merge',
         template_spec=merge_spec,
         namespace="py-spark",
-        log_pod_spec_on_failure=True
+        log_pod_spec_on_failure=True,
+        delete_on_termination=True,
+        outlets=[DATASET_GOLD_FDATA]
     )
 
     submit_etl >> submit_merge
