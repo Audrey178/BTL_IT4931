@@ -19,3 +19,4 @@ COPY . .
 
 # Lệnh mặc định (có thể override trong docker-compose)
 CMD ["python", "dags/stream_demo.py"]
+

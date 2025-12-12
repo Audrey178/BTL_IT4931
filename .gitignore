@@ -1,7 +1,5 @@
 # Docker volumes, DB data
-data/postgres/
-data/kafka/
-debezium/data/
+data/
 
 # Python stuff
 __pycache__/

@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta, timezone
+from retry_requests import retry
+
 import json
 import os
 import uuid
@@ -8,39 +10,29 @@ import requests
 import pandas as pd
 import openmeteo_requests
 import requests_cache
-from retry_requests import retry
 import psycopg2
-
-
-# =========================
-# Cấu hình & hằng số
-# =========================
 
 # Thư mục chứa file stream_demo.py
 DAGS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-FORWARD_PATH = os.path.join(DAGS_DIR, "BusPositions", "chieudi.json")
-BACKWARD_PATH = os.path.join(DAGS_DIR, "BusPositions", "chieuve.json")  # hiện chưa dùng
-OUTPUT_PATH = os.path.join(DAGS_DIR, "BusPositions", "streamed_bus_data.jsonl")
+FORWARD_PATH  = os.path.join(DAGS_DIR, "BusPositions", "chieudi.json")
+BACKWARD_PATH = os.path.join(DAGS_DIR, "BusPositions", "chieuve.json") 
+OUTPUT_PATH   = os.path.join(DAGS_DIR, "BusPositions", "streamed_bus_data.jsonl")
 
 VIETNAM_TZ = timezone(timedelta(hours=7))
 
-# Cấu hình Postgres (đọc từ biến môi trường, có giá trị mặc định để chạy trong Docker)
-HOST = os.getenv("BUSDB_HOST", "postgres")  # trong docker-compose: service name là 'postgres'
-PORT = int(os.getenv("BUSDB_PORT", "5432"))
-DATABASE = os.getenv("BUSDB_NAME", "busdb")
-USER = os.getenv("BUSDB_USER", "admin")
-PASSWORD = os.getenv("BUSDB_PASSWORD", "admin123")
+# Cấu hình Postgres
+HOST     =     os.getenv("BUSDB_HOST", "busdb") 
+PORT     = int(os.getenv("BUSDB_PORT", "5432"))
+DATABASE =     os.getenv("BUSDB_NAME", "busdb")
+USER     =     os.getenv("BUSDB_USER", "admin")
+PASSWORD =     os.getenv("BUSDB_PASSWORD", "admin123")
 CONNECT_TIMEOUT = 5
 
 # Cache cho reverse geocode để tránh gọi API trùng
 geocode_cache = {}
 
-
-# =========================
 # Open-Meteo client (cache + retry)
-# =========================
-
 CACHE_DIR = os.path.join(DAGS_DIR, ".cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
@@ -49,10 +41,7 @@ retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
 openmeteo = openmeteo_requests.Client(session=retry_session)
 
 
-# =========================
 # Hàm tiện ích
-# =========================
-
 def get_pg_connection():
     """Tạo và trả về kết nối PostgreSQL."""
     return psycopg2.connect(
@@ -93,11 +82,9 @@ def reverse_geocode(lat, lon, cache):
 
 def interpolate(forward, start_time):
     """
-    (Hiện CHƯA dùng trong hàm chính, giữ lại để sau này mô phỏng realtime.)
-
     Nội suy vị trí hiện tại của xe trên tuyến forward, trả về 1 điểm giữa đường.
 
-    forward: list các điểm trong chieudi.json
+    forward:    list các điểm trong chieudi.json
     start_time: thời điểm bắt đầu mô phỏng (datetime)
     """
     elapsed = (datetime.now(VIETNAM_TZ) - start_time).total_seconds()
@@ -157,7 +144,7 @@ def enrich_point(point):
         start_time = (dt_utc - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
         end_time = (dt_utc + timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
 
-        # --------- API: air-quality ----------
+        # API: air-quality
         air_url = "https://air-quality-api.open-meteo.com/v1/air-quality"
         air_params = {
             "latitude": lat,
@@ -196,7 +183,7 @@ def enrich_point(point):
             }
         )
 
-        # --------- API: weather ----------
+        # API: weather
         weather_url = "https://api.open-meteo.com/v1/forecast"
         weather_params = {
             "latitude": lat,
@@ -233,7 +220,7 @@ def enrich_point(point):
             }
         )
 
-        # Merge 2 nguồn theo thời gian gần nhất
+        # Merge 2 nguồn
         merged_df = pd.merge_asof(
             air_df.sort_values("datetime_utc"),
             weather_df.sort_values("datetime_utc"),
@@ -402,9 +389,6 @@ def stream_forward_realtime(delay_seconds=10, max_points=None):
         if conn:
             conn.close()
 
-# =========================
 # Entry point
-# =========================
-
 if __name__ == "__main__":
     stream_forward_realtime(delay_seconds=1, max_points=None)

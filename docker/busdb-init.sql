@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS bus_data (
+    id UUID PRIMARY KEY,
+    stop_id UUID,
+    stop_name TEXT,
+    stop_lat DOUBLE PRECISION,
+    stop_lon DOUBLE PRECISION,
+    stop_desc TEXT,
+    event_time TIMESTAMPTZ,
+    location_name TEXT,
+    carbon_monoxide DOUBLE PRECISION,
+    carbon_dioxide DOUBLE PRECISION,
+    nitrogen_dioxide DOUBLE PRECISION,
+    sulphur_dioxide DOUBLE PRECISION,
+    uv_index_clear_sky DOUBLE PRECISION,
+    uv_index DOUBLE PRECISION,
+    temperature_2m DOUBLE PRECISION,
+    relative_humidity_2m DOUBLE PRECISION,
+    precipitation DOUBLE PRECISION,
+    windspeed_10m DOUBLE PRECISION,
+    winddirection_10m DOUBLE PRECISION
+);
