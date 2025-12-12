@@ -130,6 +130,11 @@ logs:
     enabled: true
     size: 2Gi
 
+config:
+  core:
+    parallelism: 2
+    max_active_tasks_per_dag: 1
+
 # Optional: add plugins volume (compose mounted ./plugins). You can manage plugins in your image instead.
 #plugins:
 #  persistence:

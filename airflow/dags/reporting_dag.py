@@ -44,12 +44,13 @@ def reporting_dag():
             task_id=task_id,
             template_spec=create_tpl(),
             namespace="py-spark",
-            log_pod_spec_on_failure=True
+            log_pod_spec_on_failure=True,
+            delete_on_termination=True
         )
     s3_daily = create_report_task('submit_s3_daily', 's3_daily.py', PATH_DAILY, 'DAILY')
     s4_hourly = create_report_task('submit_s4_hourly', 's4_hourly.py', PATH_HOURLY, 'HOURLY')
     s6_geo = create_report_task('submit_s6_geo', 's6_geo_map_aqi.py', PATH_GEO, 'GEO')
     
-    [s3_daily, s4_hourly, s6_geo]
+    s3_daily >> s4_hourly >> s6_geo
     
 reporting_dag()

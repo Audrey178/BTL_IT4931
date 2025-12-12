@@ -39,7 +39,8 @@ def monthly_dag():
         task_id='submit_s5_monthly',
         template_spec=tpl_s5(),
         namespace="py-spark",
-        log_pod_spec_on_failure=True
+        log_pod_spec_on_failure=True,
+        delete_on_termination=True
     )
 
     s5
