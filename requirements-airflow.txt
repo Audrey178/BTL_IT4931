@@ -1,0 +1,2 @@
+apache-airflow-providers-cncf-kubernetes>=10.7.0
+apache-airflow-providers-apache-spark>=5.3.2
