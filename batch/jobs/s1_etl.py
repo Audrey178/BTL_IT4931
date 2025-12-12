@@ -3,7 +3,7 @@ import uuid
 from batch.utils import build_spark
 
 from pyspark.sql import types 
-from pyspark.sql.functions import col, to_timestamp, when, lit, year, month, dayofmonth, hour, coalesce
+from pyspark.sql.functions import col, to_timestamp, when, lit, year, month, dayofmonth, hour, coalesce, regexp_replace, get_json_object
 from pyspark.sql.types import StringType
 
 APP_NAME = 'Job 1: ETL'
@@ -19,13 +19,12 @@ def main():
     schema = types.StructType([types.StructField('stopId', types.StringType(), True),
                      types.StructField('countryIso', types.StringType(), True), 
                      types.StructField('countryUrl', types.StringType(), True), 
-                     types.StructField('stopName', types.StringType(), True), 
+                     types.StructField('routeName', types.StringType(), True), 
                      types.StructField('stopTypeGroup', types.StringType(), True), 
                      types.StructField('stopLat', types.DoubleType(), True), 
                      types.StructField('stopLon', types.DoubleType(), True), 
-                     types.StructField('stopDesc', types.StringType(), True), 
                      types.StructField('datetime', types.StringType(), True), 
-                     types.StructField('tags', types.StructType([types.StructField('name', types.StringType(), True)]), True), 
+                     types.StructField('tags', types.StringType(), True), 
                      types.StructField('carbon_monoxide', types.DoubleType(), True), 
                      types.StructField('carbon_dioxide', types.DoubleType(), True), 
                      types.StructField('nitrogen_dioxide', types.DoubleType(), True), 
@@ -38,15 +37,16 @@ def main():
                      types.StructField('windspeed_10m', types.DoubleType(), True), 
                      types.StructField('winddirection_10m', types.DoubleType(), True)])
     
-    df = spark.read \
+    df = spark.readStream \
+          .option("maxFilesPerTrigger", 1000) \
           .option("header", "true") \
           .schema(schema) \
-          .parquet(args.input)
+          .parquet(args.input) \
     
     
     df = df.withColumn("datetime", to_timestamp("datetime")) \
-        .withColumn("locationName", col('tags.name')).drop('tags') \
-            .withColumn("stopDesc",when((col("stopDesc").isNull()) | (col("stopDesc") == ""), lit("unknown")).otherwise(col("stopDesc"))) \
+        .withColumn("locationName", get_json_object(regexp_replace(col('tags'), "'", '"'), "$.name")) \
+        .drop('tags')
     
     # Handle clean data
     df = df.fillna({
@@ -77,8 +77,15 @@ def main():
         coalesce(col("sulphur_dioxide"), lit(0.3)) * lit(1.0)
     )
                 
-    df.write.format('delta').mode('overwrite').option("overwriteSchema", 'true')\
-        .partitionBy('year', 'month', 'day').save(args.bronze)
+    query = df.writeStream \
+        .format("delta") \
+        .outputMode("append") \
+        .partitionBy("year", "month", "day") \
+        .option("checkpointLocation", f"{args.bronze}/_checkpoints/s1_etl") \
+        .trigger(availableNow=True) \
+        .start(args.bronze)
+    
+    query.awaitTermination()
     
     spark.stop() 
         

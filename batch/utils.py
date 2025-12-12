@@ -2,7 +2,7 @@ import os
 from pyspark.sql import SparkSession
 from pyspark import SparkContext
 
-os.environ["SPARK_HOME"] = "/home/trang/spark"
+os.environ["SPARK_HOME"] = "/home/vietanh/spark"
 
 def load_config(spark_context: SparkContext):
     spark_context._jsc.hadoopConfiguration().set("fs.s3a.access.key", os.getenv("AWS_ACCESS_KEY_ID", "minio"))
@@ -17,11 +17,17 @@ def load_config(spark_context: SparkContext):
     spark_context._jsc.hadoopConfiguration().set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
 
 def build_spark(app_name: str):
+    packages = [
+        "io.delta:delta-spark_2.12:3.0.0",
+        "org.apache.hadoop:hadoop-aws:3.3.4"
+    ]
+    
     spark = SparkSession.builder \
             .appName(app_name) \
-                .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-                    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
-                        .getOrCreate()
+                .config("spark.jars.packages", ",".join(packages)) \
+                    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+                        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+                            .getOrCreate()
     spark.conf.set("spark.sql.legacy.timeParserPolicy", "LEGACY")
     print(spark.sparkContext._conf.get("spark.jars"))
     
