@@ -1,14 +1,32 @@
 apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: datalake-pv
+  labels:
+    type: local
+spec:
+  storageClassName: manual-datalake
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/volume_sgp1_01/datalake-data"
+
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: datalake-pvc
   namespace: batch
 spec:
+  storageClassName: manual-datalake
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 50Mi # update size as needed
+      storage: 50Gi
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -34,7 +52,7 @@ spec:
             - containerPort: 5432
           env:
             - name: POSTGRES_DB
-              value: "busdb"
+              value: "datalakedb"
             - name: POSTGRES_USER
               value: "admin"
             - name: POSTGRES_PASSWORD
@@ -42,16 +60,6 @@ spec:
           volumeMounts:
             - name: postgresql-data
               mountPath: /var/lib/postgresql/data
-          readinessProbe:
-            tcpSocket:
-              port: 5432
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          livenessProbe:
-            tcpSocket:
-              port: 5432
-            initialDelaySeconds: 30
-            periodSeconds: 20
       volumes:
         - name: postgresql-data
           persistentVolumeClaim:
@@ -63,13 +71,12 @@ kind: Service
 metadata:
   name: datalake
   namespace: batch
-  labels:
-    app: datalake
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: datalake
   ports:
     - name: postgres
       port: 5432
       targetPort: 5432
+      nodePort: 30054
