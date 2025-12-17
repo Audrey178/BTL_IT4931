@@ -1,147 +1,235 @@
-from airflow import DAG
-from airflow.providers.standard.operators.python import PythonOperator
 from datetime import datetime, timedelta, timezone
-import json, uuid, random, requests, os
-import numpy as np
-import pendulum
+import json
+import os
+import uuid
 import time
+
+import requests
+import pandas as pd
 import psycopg2
 
-DAGS_DIR = os.path.dirname(__file__)
-FORWARD_PATH = os.path.join(DAGS_DIR, 'BusPositions/chieudi.json')
-BACKWARD_PATH = os.path.join(DAGS_DIR, 'BusPositions/chieuve.json')
-OUTPUT_PATH = os.path.join(DAGS_DIR, 'BusPositions/streamed_bus_data.jsonl')
-VIETNAM_TZ = timezone(timedelta(hours=7))
-START_TIME = datetime.now(tz=VIETNAM_TZ)
+import openmeteo_requests
+import requests_cache
+from retry_requests import retry
 
+
+# ===================== PATH & TIMEZONE =====================
+DAGS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+FORWARD_PATH = os.path.join(DAGS_DIR, "BusPositions", "chieudi.json")
+OUTPUT_PATH  = os.path.join(DAGS_DIR, "BusPositions", "streamed_bus_data.jsonl")
+
+VIETNAM_TZ = timezone(timedelta(hours=7))
+
+
+# ===================== POSTGRES CONFIG =====================
+HOST = "localhost"
+PORT = 5432
+DATABASE = "busdb"
+USER = "admin"
+PASSWORD = "admin123"
+CONNECT_TIMEOUT = 5
+
+
+# ===================== CACHE =====================
 geocode_cache = {}
 
-def random_time(lo, hi):
-    return random.randint(lo, hi)
+CACHE_DIR = os.path.join(DAGS_DIR, ".cache")
+os.makedirs(CACHE_DIR, exist_ok=True)
 
-def reverse_geocode(lat, lon, cache):
+cache_session = requests_cache.CachedSession(CACHE_DIR, expire_after=3600)
+retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+openmeteo = openmeteo_requests.Client(session=retry_session)
+
+
+# ===================== POSTGRES =====================
+def get_pg_connection():
+    return psycopg2.connect(
+        host=HOST,
+        port=PORT,
+        database=DATABASE,
+        user=USER,
+        password=PASSWORD,
+        connect_timeout=CONNECT_TIMEOUT
+    )
+
+
+# ===================== GEO =====================
+def reverse_geocode(lat, lon):
     key = (round(lat, 6), round(lon, 6))
-    if key in cache:
-        return cache[key]
+    if key in geocode_cache:
+        return geocode_cache[key]
+
     url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json"
-    headers = {"User-Agent": "bus26A-simulator/1.0"}
+    headers = {"User-Agent": "bus-stream-simulator/1.0"}
+
     try:
         res = requests.get(url, headers=headers, timeout=5)
         if res.status_code == 200:
-            data = res.json()
-            name = data.get("display_name", "Unknown location")
-            cache[key] = name
+            name = res.json().get("display_name", "Unknown location")
+            geocode_cache[key] = name
             return name
     except Exception as e:
-        print(f"[reverse_geocode] error: {e}")
-    cache[key] = "Unknown location"
+        print("[reverse_geocode] error:", e)
+
+    geocode_cache[key] = "Unknown location"
     return "Unknown location"
 
-def interpolate(forward, start_time):
-    elapsed = (datetime.now(VIETNAM_TZ) - start_time).total_seconds()
 
-    for i in range(len(forward) - 1):
-        t1 = (datetime.fromisoformat(forward[i]["datetime"]) -
-              datetime.fromisoformat(forward[0]['datetime'])).total_seconds()
-        t2 = (datetime.fromisoformat(forward[i + 1]["datetime"]) -
-              datetime.fromisoformat(forward[0]['datetime'])).total_seconds()
+# ===================== ENRICH =====================
+def enrich_point(point):
+    enriched = dict(point)
 
-        if t1 <= elapsed <= t2:
-            ratio = (elapsed - t1) / (t2 - t1)
-            lat = forward[i]["stopLat"] + ratio * (forward[i + 1]["stopLat"] - forward[i]["stopLat"])
-            lon = forward[i]["stopLon"] + ratio * (forward[i + 1]["stopLon"] - forward[i]["stopLon"])
+    lat = point["stopLat"]
+    lon = point["stopLon"]
 
-            return {
-                'stopId': str(uuid.uuid4()),
-                'stopName': 'random',
-                'stopLat': lat,
-                'stopLon': lon,
-                'stopDesc': '',
-                'datetime': datetime.now(VIETNAM_TZ).isoformat(),
-                'location_name': reverse_geocode(lat, lon, geocode_cache)
-            }
-    return None
+    enriched["location_name"] = reverse_geocode(lat, lon)
 
-
-def insert_to_postgres(point):
-    conn = None
     try:
-        print("Đang kết nối tới Postgres...")
+        dt_utc = pd.to_datetime(point["datetime"], utc=True)
+        start = (dt_utc - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
+        end   = (dt_utc + timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
 
-        conn = psycopg2.connect(
-            host="localhost",
-            port="5432",
-            database="busdb",
-            user="admin",
-            password="admin123",
-            connect_timeout=5 
+        # ---- AIR QUALITY ----
+        air_url = "https://air-quality-api.open-meteo.com/v1/air-quality"
+        air_params = {
+            "latitude": lat,
+            "longitude": lon,
+            "hourly": [
+                "carbon_monoxide",
+                "carbon_dioxide",
+                "nitrogen_dioxide",
+                "sulphur_dioxide",
+                "uv_index_clear_sky",
+                "uv_index"
+            ],
+            "start": start,
+            "end": end
+        }
+
+        air = openmeteo.weather_api(air_url, params=air_params)[0].Hourly()
+
+        air_df = pd.DataFrame({
+            "datetime_utc": pd.date_range(
+                start=pd.to_datetime(air.Time(), unit="s", utc=True),
+                end=pd.to_datetime(air.TimeEnd(), unit="s", utc=True),
+                freq=pd.Timedelta(seconds=air.Interval()),
+                inclusive="left"
+            ),
+            "carbon_monoxide": air.Variables(0).ValuesAsNumpy(),
+            "carbon_dioxide": air.Variables(1).ValuesAsNumpy(),
+            "nitrogen_dioxide": air.Variables(2).ValuesAsNumpy(),
+            "sulphur_dioxide": air.Variables(3).ValuesAsNumpy(),
+            "uv_index_clear_sky": air.Variables(4).ValuesAsNumpy(),
+            "uv_index": air.Variables(5).ValuesAsNumpy(),
+        })
+
+        # ---- WEATHER ----
+        weather_url = "https://api.open-meteo.com/v1/forecast"
+        weather_params = {
+            "latitude": lat,
+            "longitude": lon,
+            "hourly": [
+                "temperature_2m",
+                "relative_humidity_2m",
+                "precipitation",
+                "windspeed_10m",
+                "winddirection_10m"
+            ],
+            "start": start,
+            "end": end
+        }
+
+        w = openmeteo.weather_api(weather_url, params=weather_params)[0].Hourly()
+
+        weather_df = pd.DataFrame({
+            "datetime_utc": pd.date_range(
+                start=pd.to_datetime(w.Time(), unit="s", utc=True),
+                end=pd.to_datetime(w.TimeEnd(), unit="s", utc=True),
+                freq=pd.Timedelta(seconds=w.Interval()),
+                inclusive="left"
+            ),
+            "temperature_2m": w.Variables(0).ValuesAsNumpy(),
+            "relative_humidity_2m": w.Variables(1).ValuesAsNumpy(),
+            "precipitation": w.Variables(2).ValuesAsNumpy(),
+            "windspeed_10m": w.Variables(3).ValuesAsNumpy(),
+            "winddirection_10m": w.Variables(4).ValuesAsNumpy(),
+        })
+
+        merged = pd.merge_asof(
+            air_df.sort_values("datetime_utc"),
+            weather_df.sort_values("datetime_utc"),
+            on="datetime_utc"
         )
 
-        cur = conn.cursor()
-        query = """
-            INSERT INTO bus_positions (
-                id, stop_name, stop_lat, stop_lon, stop_desc, event_time, location_name
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s);
-        """
-
-        cur.execute(query, (
-            point["stopId"],
-            point["stopName"],
-            point["stopLat"],
-            point["stopLon"],
-            point["stopDesc"],
-            point["datetime"],
-            point["location_name"]
-        ))
-
-        conn.commit()
-        print(f"INSERT thành công ID: {point['stopId']}")
-        cur.close()
+        row = merged.iloc[(merged["datetime_utc"] - dt_utc).abs().argmin()]
+        enriched.update(row.drop("datetime_utc").to_dict())
 
     except Exception as e:
-        print(f"FATAL ERROR Postgres: {e}")
-        raise e
-    finally:
-        if conn:
-            conn.close()
+        print("[enrich_point] error:", e)
 
-def emit_one_bus_point(**context):
-    with open(FORWARD_PATH) as f:
+    return enriched
+
+
+# ===================== INSERT =====================
+def insert_to_postgres(cur, point):
+    query = """
+        INSERT INTO bus_data (
+            id, stop_id, stop_name, stop_lat, stop_lon, stop_desc,
+            event_time, location_name,
+            carbon_monoxide, carbon_dioxide, nitrogen_dioxide, sulphur_dioxide,
+            uv_index_clear_sky, uv_index,
+            temperature_2m, relative_humidity_2m, precipitation,
+            windspeed_10m, winddirection_10m
+        )
+        VALUES (
+            %(id)s, %(stop_id)s, %(stopName)s, %(stopLat)s, %(stopLon)s, %(stopDesc)s,
+            %(datetime)s, %(location_name)s,
+            %(carbon_monoxide)s, %(carbon_dioxide)s, %(nitrogen_dioxide)s, %(sulphur_dioxide)s,
+            %(uv_index_clear_sky)s, %(uv_index)s,
+            %(temperature_2m)s, %(relative_humidity_2m)s, %(precipitation)s,
+            %(windspeed_10m)s, %(winddirection_10m)s
+        );
+    """
+
+    params = dict(point)
+    params["id"] = str(uuid.uuid4())
+    params["stop_id"] = point["stopId"]
+
+    cur.execute(query, params)
+
+
+# ===================== STREAM =====================
+def stream_realtime(delay_seconds=1):
+    with open(FORWARD_PATH, "r", encoding="utf-8") as f:
         forward = json.load(f)
-    point = interpolate(forward, START_TIME)
-    
-    if point:
-        # ghi file .jsonl
-        with open(OUTPUT_PATH, "a") as f:
-            f.write(json.dumps(point, ensure_ascii=False) + "\n")
 
-        print("Elapsed time: ", point['datetime'])
+    conn = get_pg_connection()
+    cur = conn.cursor()
 
-        # ghi Postgres
-        insert_to_postgres(point)
-    else:
-        print("Đã kết thúc tuyến.")
+    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+
+    with open(OUTPUT_PATH, "a", encoding="utf-8") as out_f:
+        for idx, raw in enumerate(forward, start=1):
+            point = dict(raw)
+            point.setdefault("stopId", str(uuid.uuid4()))
+            point.setdefault("datetime", datetime.now(VIETNAM_TZ).isoformat())
+
+            enriched = enrich_point(point)
+
+            insert_to_postgres(cur, enriched)
+            conn.commit()
+
+            out_f.write(json.dumps(enriched, ensure_ascii=False) + "\n")
+
+            print(f"[{idx}] {enriched['location_name']} | {enriched['temperature_2m']}°C")
+
+            time.sleep(delay_seconds)
+
+    cur.close()
+    conn.close()
 
 
-default_args = {
-    'owner': 'vietanh',
-    'depends_on_past': False,
-    'retries': 0,
-}
-
-with DAG(
-    dag_id='bus_stream_simulator',
-    default_args=default_args,
-    description='Emit one bus-location point every 30s AND insert into Postgres for Debezium',
-    schedule=timedelta(seconds=30),
-    start_date=pendulum.datetime(2025, 10, 14, 4, 59, tz=VIETNAM_TZ),
-    catchup=False,
-    max_active_runs=1,
-    tags=['bus', 'simulator', 'realtime'],
-) as dag:
-    emit_task = PythonOperator(
-        task_id='emit_one_bus_point',
-        python_callable=emit_one_bus_point,
-    )
-    
+# ===================== MAIN =====================
+if __name__ == "__main__":
+    stream_realtime(delay_seconds=1)
