@@ -131,7 +131,9 @@ python -m pip install -r requirements.txt
 
 # 3. Khởi tạo cơ sở dữ liệu Airflow:
 airflow db init
-
+# kubectl port-forward svc/datalake 5432:5432 -n batch
+#kubectl port-forward -n batch svc/kafka-broker-1 29092:29092
+#SELECT * FROM bus_environment_result
 # 4. Khởi động Airflow Web Server và Scheduler:
 airflow webserver --port 8080
 airflow scheduler

@@ -1,3 +1,7 @@
 __pycache__/
 docs/
 nqd_notebook/
+minikube-linux-amd64
+k8s/flink/flink-1.20.2/**
+*.tgz
+*.jar

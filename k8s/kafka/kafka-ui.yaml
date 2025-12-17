@@ -27,6 +27,8 @@ spec:
           value: "kafka-broker-1:29092"
         - name: KAFKA_CLUSTERS_0_ZOOKEEPER
           value: "zookeeper-1:2181"
+        - name: KAFKA_CLUSTERS_0_SCHEMAREGISTRY
+          value: "http://schema-registry:8081"   # thêm biến này
         - name: AUTH_TYPE
           value: "LOGIN_FORM"
         - name: SPRING_SECURITY_USER_NAME

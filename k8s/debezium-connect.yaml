@@ -21,24 +21,44 @@ spec:
           ports:
             - containerPort: 8083
           env:
+            # Kafka Cluster
             - name: BOOTSTRAP_SERVERS
               value: "kafka-broker-1:29092"
+
+            # Connect Worker group
             - name: GROUP_ID
               value: "1"
+
+            # Internal topics
             - name: CONFIG_STORAGE_TOPIC
               value: "connect_configs"
             - name: OFFSET_STORAGE_TOPIC
               value: "connect_offsets"
+            - name: STATUS_STORAGE_TOPIC
+              value: "connect_status"
+
+            # Internal topics MUST be JSON
+            - name: CONNECT_INTERNAL_KEY_CONVERTER
+              value: "org.apache.kafka.connect.json.JsonConverter"
+            - name: CONNECT_INTERNAL_VALUE_CONVERTER
+              value: "org.apache.kafka.connect.json.JsonConverter"
+
             - name: KEY_CONVERTER
-              value: "io.confluent.connect.avro.AvroConverter"
+              value: "org.apache.kafka.connect.json.JsonConverter"
             - name: VALUE_CONVERTER
-              value: "io.confluent.connect.avro.AvroConverter"
-            - name: CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL
-              value: "http://schema-registry:8081"
-            - name: CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL
-              value: "http://schema-registry:8081"
+              value: "org.apache.kafka.connect.json.JsonConverter"
+            - name: CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE
+              value: "true"
+            - name: CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE
+              value: "true"
+
+            # Allow auto topic creation
             - name: CONNECT_TOPIC_CREATION_ENABLE
               value: "true"
+
+            # Plugin path (bắt buộc)
+            - name: CONNECT_PLUGIN_PATH
+              value: "/kafka/connect"
           readinessProbe:
             httpGet:
               path: /connectors
@@ -51,7 +71,6 @@ spec:
               port: 8083
             initialDelaySeconds: 30
             periodSeconds: 20
-
 ---
 apiVersion: v1
 kind: Service
@@ -66,5 +85,5 @@ spec:
     app: debezium-connect
   ports:
     - name: http
-      port: 8083        
-      targetPort: 8083  
+      port: 8083
+      targetPort: 8083
