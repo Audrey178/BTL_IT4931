@@ -7,6 +7,7 @@ from pyflink.table import (
 )
 from pyflink.table.udf import udf
 import math  # QUAN TRỌNG: Để xử lý lỗi NaN
+import os
 
 # ======================================================
 # 1️⃣ BUSINESS LOGIC CLASSES
@@ -121,17 +122,30 @@ def main():
     settings = EnvironmentSettings.new_instance().in_streaming_mode().build()
     t_env = StreamTableEnvironment.create(exec_env, environment_settings=settings)
 
-    # --- B. Load Jars ---
-    jar_dir = Path("/mnt/e/20251/BTL_IT4931/k8s/flink").resolve()
-    t_env.get_config().get_configuration().set_string(
-        "pipeline.jars",
-        ";".join([
-            f"file://{jar_dir / 'flink-sql-connector-kafka-3.3.0-1.20.jar'}",
-            f"file://{jar_dir / 'flink-sql-json-1.20.0.jar'}",
-            f"file://{jar_dir / 'flink-connector-jdbc-3.3.0-1.20.jar'}",
-            f"file://{jar_dir / 'postgresql-42.7.3.jar'}",
-        ])
-    )
+    # --- B. Load Jars (K8s version) ---
+    # For K8s deployment, jars should be:
+    # 1. In the image (ADD to Dockerfile), OR
+    # 2. Downloaded from external storage, OR  
+    # 3. Use environment variables to specify paths
+    jar_dir = os.getenv('JAR_DIR', '/opt/flink/jars')
+    
+    jar_files = [
+        f"file://{jar_dir}/flink-sql-connector-kafka-3.3.0-1.20.jar",
+        f"file://{jar_dir}/flink-sql-json-1.20.0.jar",
+        f"file://{jar_dir}/flink-connector-jdbc-3.3.0-1.20.jar",
+        f"file://{jar_dir}/postgresql-42.7.3.jar",
+    ]
+    
+    # Only set pipeline.jars if files exist
+    existing_jars = [j for j in jar_files if os.path.exists(j.replace('file://', ''))]
+    if existing_jars:
+        t_env.get_config().get_configuration().set_string(
+            "pipeline.jars",
+            ";".join(existing_jars)
+        )
+        print(f"✓ Loaded jars: {existing_jars}")
+    else:
+        print("⚠ No jar files found. They should be pre-configured in Flink cluster.")
 
     # --- C. Register UDFs in SQL ---
     t_env.create_temporary_function("extract_location", extract_location)
@@ -142,8 +156,12 @@ def main():
     t_env.create_temporary_function("environment_index", environment_index)
 
     # --- D. Define Source (Kafka) ---
-    # Group ID đổi sang v3 để chạy mới hoàn toàn
-    t_env.execute_sql("""
+    # K8s Service: kafka-broker-1:29092 (namespace: batch)
+    kafka_broker = os.getenv('KAFKA_BROKER', 'kafka-broker-1:29092')
+    
+    print(f"📡 Connecting to Kafka: {kafka_broker}")
+    
+    t_env.execute_sql(f"""
         CREATE TABLE bus_data_source (
             id STRING,
             stop_id STRING,
@@ -163,8 +181,8 @@ def main():
         ) WITH (
             'connector' = 'kafka',
             'topic' = 'datalake.public.bus_data',
-            'properties.bootstrap.servers' = 'kafka-broker-1:29092',
-            'properties.group.id' = 'flink-production-group-v3', 
+            'properties.bootstrap.servers' = '{kafka_broker}',
+            'properties.group.id' = 'flink-k8s-production-group', 
             'scan.startup.mode' = 'latest-offset',
             'format' = 'debezium-json',
             'debezium-json.schema-include' = 'true',
@@ -205,9 +223,17 @@ def main():
         WHERE id IS NOT NULL
     """)
 
-    # --- F. Define Sink (Postgres) ---
-    # Cấu trúc bảng đã cập nhật: temperature, humidity, aqi
-    t_env.execute_sql("""
+    # --- F. Define Sink (Data Warehouse - PostgreSQL) ---
+    # K8s Service: datawarehouse:5432 (for OUTPUT data)
+    warehouse_host = os.getenv('WAREHOUSE_HOST', 'datawarehouse')
+    warehouse_port = os.getenv('WAREHOUSE_PORT', '5432')
+    warehouse_db = os.getenv('WAREHOUSE_DB', 'warehousedb')
+    warehouse_user = os.getenv('WAREHOUSE_USER', 'admin')
+    warehouse_password = os.getenv('WAREHOUSE_PASSWORD', 'admin123')
+    
+    print(f"🏭 Data Warehouse: {warehouse_host}:{warehouse_port}/{warehouse_db}")
+    
+    t_env.execute_sql(f"""
         CREATE TABLE bus_environment_sink (
             source_id STRING,
             stop_id STRING,
@@ -223,10 +249,10 @@ def main():
             PRIMARY KEY (source_id) NOT ENFORCED
         ) WITH (
             'connector' = 'jdbc',
-            'url' = 'jdbc:postgresql://localhost:5432/busdb', 
+            'url' = 'jdbc:postgresql://{warehouse_host}:{warehouse_port}/{warehouse_db}', 
             'table-name' = 'bus_environment_result',
-            'username' = 'admin',
-            'password' = 'admin123',
+            'username' = '{warehouse_user}',
+            'password' = '{warehouse_password}',
             'driver' = 'org.postgresql.Driver',
             'sink.buffer-flush.max-rows' = '1',
             'sink.buffer-flush.interval' = '1s'
@@ -234,6 +260,9 @@ def main():
     """)
 
     print(" Flink Job Started: Sending Cleaned Location + Temp/Hum/AQI to Postgres...")
+    print(f"✓ Kafka topic: datalake.public.bus_data")
+    print(f"✓ Output table: bus_environment_result")
+    print("=" * 60)
     
     # --- G. Execute ---
     t_env.execute_sql("""
