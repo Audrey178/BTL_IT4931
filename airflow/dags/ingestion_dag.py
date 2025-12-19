@@ -10,6 +10,7 @@ from airflow.providers.cncf.kubernetes.operators.spark_kubernetes import SparkKu
 from utils.spark_utils import load_template_local, ConfigTypes
 from utils.config_manager import config_manager
 
+DATASET_SENSOR_DATA = Asset(f"s3a://{config_manager.storage_config.bucket}/sensor-data")
 DATASET_GOLD_FDATA = Asset(f"s3a://{config_manager.storage_config.bucket}/delta/gold-fdata")
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,8 @@ default_args = {
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=['spark', 's3', 'k8s'],
-    default_args=default_args
+    default_args=default_args,
+    schedule=[DATASET_SENSOR_DATA]
 )
 def spark_job_dag():
     @task

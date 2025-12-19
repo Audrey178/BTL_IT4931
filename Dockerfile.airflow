@@ -27,6 +27,9 @@ USER airflow
 
 COPY requirements-airflow.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pip install s3fs
+RUN pip install retry-requests==2.0.0 requests-cache==1.0.1 requests==2.31.0 openmeteo-requests
+RUN pip install "urllib3<2.0.0"
 
 COPY airflow/dags/ "/opt/airflow/dags"
 # Create directories for logs
