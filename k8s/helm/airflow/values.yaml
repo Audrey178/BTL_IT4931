@@ -1,0 +1,136 @@
+executor: KubernetesExecutor
+airflowVersion: "3.1.0"
+# migrateDatabaseJob:
+#   enabled: true
+#   ttlSecondsAfterFinished: 300
+images:
+  airflow:
+    repository: py-spark-airflow
+    tag: v1
+    pullPolicy: IfNotPresent
+
+# Create an admin user on first install
+# webserver:
+#   defaultUser:
+#     username: admin
+#     password: admin
+#     role: Admin
+#     email: admin@example.com
+#     firstName: First Name
+#     lastName: Last Name
+
+env:
+  - name: SPARK_MASTER_URL
+    value: "k8s://https://kubernetes.default.svc:443"
+  - name: SPARK_IMAGE_VERSION
+    value: "v1"
+  - name: AIRFLOW_CONN_KUBERNETES_DEFAULT
+    value: "kubernetes://?extra__kubernetes__in_cluster=true"
+  - name: AIRFLOW__SECRETS__SENSITIVE_FIELDS
+    value: "AWS_SECRET_ACCESS_KEY,AWS_ACCESS_KEY_ID"
+  - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
+    value: "True"
+  - name: AIRFLOW__CORE__LOAD_EXAMPLES
+    value: "False"
+  - name: AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK
+    value: "True"
+  #   - name: AIRFLOW__CORE__ENABLE_XCOM_PICKLING
+  #     value: "True"
+  #   - name: AIRFLOW__CORE__AUTH_MANAGER
+  #     value: "airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager"
+  #   - name: AIRFLOW__FAB__SESSION_BACKEND
+  #     value: "securecookie"
+  - name: AIRFLOW__CORE__DEFAULT_TIMEZONE
+    value: "Asia/Jerusalem"
+  - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
+    value: "http://airflow-api-server:8080/execution/"
+  - name: TZ
+    value: "Asia/Jerusalem"
+  - name: SPARK_HOME
+    value: "/opt/spark"
+  - name: SPARK_CONNECTION_METHOD
+    value: "session"
+  - name: SPARK_CONN_HOST
+    value: "k8s://https://kubernetes.default.svc"
+  - name: SPARK_CONN_PORT
+    value: "443"
+  - name: STORAGE_BUCKET
+    value: bus-sensor-data
+  - name: STORAGE_ENDPOINT
+    value: https://cuong-dev.cloud:9000
+  - name: STORAGE_ENDPOINT_SSL_ENABLE
+    value: "true"
+  - name: AWS_ACCESS_KEY_ID
+    value: minio
+  - name: AWS_SECRET_ACCESS_KEY
+    value: minio123
+  - name: STORAGE_PATH_STYLE_ACCESS
+    value: "true"
+  - name: AWS_REGION
+    value: us-east-1
+  - name: AIRFLOW__WEBSERVER__SECRET_KEY
+    value: "vanh"
+  - name: AIRFLOW__API__AUTH_JWT_SECRET
+    value: "vanh"
+
+# enableBuiltInSecretEnvVars:
+#   AIRFLOW__CORE__FERNET_KEY: true
+#   AIRFLOW__CORE__SQL_ALCHEMY_CONN: true
+#   AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: false
+#   AIRFLOW_CONN_AIRFLOW_DB: false
+#   AIRFLOW__API__SECRET_KEY: true
+#   AIRFLOW__API_AUTH__JWT_SECRET: true
+#   AIRFLOW__WEBSERVER__SECRET_KEY: true
+#   AIRFLOW__CELERY__CELERY_RESULT_BACKEND: false
+#   AIRFLOW__CELERY__RESULT_BACKEND: false
+#   AIRFLOW__CELERY__BROKER_URL: false
+#   AIRFLOW__ELASTICSEARCH__HOST: false
+#   AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_HOST: false
+#   AIRFLOW__OPENSEARCH__HOST: false
+
+# Webserver exposure (NodePort for quick local access; swap to Ingress for production)
+web:
+  service:
+    type: ClusterIP
+    externalPort: 8080
+scheduler:
+  replicas: 1
+triggerer:
+  enabled: true
+  replicas: 1
+redis:
+  enabled: false
+statsd:
+  enabled: false
+postgresql:
+  enabled: true
+  image:
+    repository: bitnamilegacy/postgresql
+    tag: "13.2.0"
+    auth:
+      enablePostgresUser: true
+
+workers:
+  serviceAccount:
+    create: true
+
+# DAGs: GitSync (compose mounted './dags' as a host path)
+# dags:
+#  gitSync:
+#    enabled: true
+#    repo: "https://github.com/viet-anh-le/test-airflow.git"   # ← change
+#    branch: main
+#    subPath: "airflow/dags"
+#    depth: 1
+#    wait: 60
+
+# Persist Airflow logs (compose mounted ./logs)
+logs:
+  persistence:
+    enabled: true
+    size: 2Gi
+# Optional: add plugins volume (compose mounted ./plugins). You can manage plugins in your image instead.
+#plugins:
+#  persistence:
+#    enabled: true
+#    size: 1Gi
