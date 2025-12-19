@@ -1,0 +1,185 @@
+# =====================================================
+# 1. FLINK CONFIGMAP
+# =====================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flink-config
+  namespace: batch
+data:
+  flink-conf.yaml: |
+    jobmanager.rpc.address: flink-jobmanager
+    jobmanager.rpc.port: 6123
+    blob.server.port: 6124
+    query.server.port: 6125
+    taskmanager.numberOfTaskSlots: 2
+    parallelism.default: 2
+    state.backend: hashmap
+    execution.checkpointing.interval: 30s
+    jobmanager.memory.process.size: 1600m
+    taskmanager.memory.process.size: 1600m
+    metrics.reporter.prometheus.class: org.apache.flink.metrics.prometheus.PrometheusReporter
+    metrics.reporter.prometheus.port: 9090
+
+---
+# =====================================================
+# 2. JOBMANAGER SERVICE
+# =====================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-jobmanager
+  namespace: batch
+spec:
+  selector:
+    app: flink
+    component: jobmanager
+  ports:
+    - name: rpc
+      port: 6123
+      targetPort: 6123
+    - name: ui
+      port: 8081
+      targetPort: 8081
+    - name: blob
+      port: 6124
+      targetPort: 6124
+    - name: query
+      port: 6125
+      targetPort: 6125
+  type: ClusterIP
+
+---
+# =====================================================
+# 3. JOBMANAGER DEPLOYMENT (SỬA LẠI COPY LIB)
+# =====================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-jobmanager
+  namespace: batch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flink
+      component: jobmanager
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: jobmanager
+    spec:
+      initContainers:
+        - name: copy-libs
+          image: manhlm29/flink-bus-job:1.0
+          imagePullPolicy: IfNotPresent
+          # === SỬA QUAN TRỌNG: Copy cả lib gốc và python jar ===
+          command: 
+            - "sh"
+            - "-c"
+            - "cp -a /opt/flink/lib/. /target-lib/ && cp /opt/flink/opt/flink-python*.jar /target-lib/ && echo '✅ Copied ALL libs'"
+          volumeMounts:
+            # Mount vào đường dẫn tạm, KHÔNG mount đè lên /opt/flink/lib gốc
+            - name: flink-lib
+              mountPath: /target-lib
+
+      containers:
+        - name: jobmanager
+          image: manhlm29/flink-bus-job:1.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - bash
+            - -c
+            - /opt/flink/bin/jobmanager.sh start-foreground
+          ports:
+            - containerPort: 6123
+            - containerPort: 8081
+            - containerPort: 6124
+            - containerPort: 6125
+          volumeMounts:
+            - name: flink-config
+              mountPath: /opt/flink/conf/flink-conf.yaml
+              subPath: flink-conf.yaml
+            # Main container mới mount đè vào /opt/flink/lib (Lúc này volume đã có đủ file)
+            - name: flink-lib
+              mountPath: /opt/flink/lib
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+      volumes:
+        - name: flink-config
+          configMap:
+            name: flink-config
+        - name: flink-lib
+          emptyDir: {}
+
+---
+# =====================================================
+# 4. TASKMANAGER STATEFULSET (SỬA LẠI COPY LIB)
+# =====================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: flink-taskmanager
+  namespace: batch
+spec:
+  serviceName: flink-taskmanager
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flink
+      component: taskmanager
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: taskmanager
+    spec:
+      initContainers:
+        - name: copy-libs
+          image: manhlm29/flink-bus-job:1.0
+          imagePullPolicy: IfNotPresent
+          # === SỬA QUAN TRỌNG: Copy cả lib gốc và python jar ===
+          command: 
+            - "sh"
+            - "-c"
+            - "cp -a /opt/flink/lib/. /target-lib/ && cp /opt/flink/opt/flink-python*.jar /target-lib/ && echo '✅ Copied ALL libs'"
+          volumeMounts:
+            - name: flink-lib
+              mountPath: /target-lib
+
+      containers:
+        - name: taskmanager
+          image: manhlm29/flink-bus-job:1.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - bash
+            - -c
+            - /opt/flink/bin/taskmanager.sh start-foreground
+          ports:
+            - containerPort: 6122
+          volumeMounts:
+            - name: flink-config
+              mountPath: /opt/flink/conf/flink-conf.yaml
+              subPath: flink-conf.yaml
+            # Mount lib đã đầy đủ vào đây
+            - name: flink-lib
+              mountPath: /opt/flink/lib
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+      volumes:
+        - name: flink-config
+          configMap:
+            name: flink-config
+        - name: flink-lib
+          emptyDir: {}
