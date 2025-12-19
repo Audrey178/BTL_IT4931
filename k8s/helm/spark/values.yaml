@@ -1,0 +1,18 @@
+controller:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 185
+webhook:
+  securityContext:
+    runAsNonRoot: false
+spark:
+  jobNamespaces:
+    - py-spark
+  namespaces:
+    - py-spark
+  serviceAccount:
+    create: true
+    name: spark
+sparkJob:
+  rbac:
+    create: true
