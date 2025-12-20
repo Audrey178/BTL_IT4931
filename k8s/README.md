@@ -78,6 +78,78 @@ chmod +x k8s/helm/scripts/create_airflow.sh
 kubectl apply -f minio.yaml
 ```
 **Note**: Make sure you configure more storage space in the PersistentVolumeClaim before deployment.
+# Step 4: Deloy datawarehouse:
+kubectl apply -f datawarehouse.yaml
+
+#### Step 5: Deploy flink
+kubectl apply -f flink-k8s.yaml
+#### 
+# 
+# 
+kubectl port-forward -n batch svc/kafka-broker-1 29092:29092
+kubectl apply -f flink-job-submisssion.yaml 
+# Khi thực hiện xong lệnh này thì nó sẽ tạo ngay job running để chạy file code bus_positions_job.py
+# Có thể xem UI của flink thì thực hiện forward:
+kubectl port-forward -n batch svc/flink-jobmanager 8081:8081
+# Chú ý: Để giả lập luồng stream để bắn vào postgres: thì cấu hình datalake và chú ý nhớ port-forward bằng lệnh dưới
+kubectl port-forward svc/datalake 5432:5432 -n batch
+# Sau khi forward thì dùng lệnh python schedule.py
+# Và khi dữ liệu bắn vào datalake thì chú ý nó sẽ lưu vào bảng bus_data;
+# Còn dữ liệu sau cùng thì ở trong datawarehouse trong bảng bus_environment_result;
+# Lệnh tạo 2 bảng:
+CREATE TABLE IF NOT EXISTS bus_data (
+    -- ID định danh (UUID từ Python code)
+    id VARCHAR(50) PRIMARY KEY,
+    
+    -- Thông tin trạm/xe
+    stop_id VARCHAR(50),      -- Để VARCHAR cho an toàn nếu ID có chứa chữ cái
+    stop_name VARCHAR(255),
+    stop_lat DOUBLE PRECISION,
+    stop_lon DOUBLE PRECISION,
+    stop_desc TEXT,
+    
+    -- Thời gian và địa điểm
+    event_time TIMESTAMP,     -- Thời gian sự kiện
+    location_name TEXT,       -- Tên địa điểm (từ hàm reverse_geocode)
+    
+    -- Các chỉ số cảm biến (dạng số thực)
+    carbon_monoxide DOUBLE PRECISION,
+    carbon_dioxide DOUBLE PRECISION,
+    nitrogen_dioxide DOUBLE PRECISION,
+    sulphur_dioxide DOUBLE PRECISION,
+    uv_index_clear_sky DOUBLE PRECISION,
+    uv_index DOUBLE PRECISION,
+    temperature_2m DOUBLE PRECISION,
+    relative_humidity_2m DOUBLE PRECISION,
+    precipitation DOUBLE PRECISION,
+    windspeed_10m DOUBLE PRECISION,
+    winddirection_10m DOUBLE PRECISION
+);
+CREATE TABLE IF NOT EXISTS bus_environment_result (
+    -- ID gốc từ nguồn dữ liệu (dùng làm khóa chính để Upsert/tránh trùng lặp)
+    source_id VARCHAR(100) PRIMARY KEY,
+    
+    -- Thông tin trạm dừng
+    stop_id VARCHAR(50),
+    stop_name VARCHAR(255),
+    
+    -- Tọa độ
+    stop_lat DOUBLE PRECISION,
+    stop_lon DOUBLE PRECISION,
+    
+    -- Địa điểm đã được làm sạch qua hàm extract_location
+    location_name TEXT,
+    
+    -- Thời gian sự kiện
+    event_time TIMESTAMP,
+    
+    -- Các chỉ số môi trường trực tiếp và tính toán
+    temperature DOUBLE PRECISION,      -- Nhiệt độ
+    humidity DOUBLE PRECISION,         -- Độ ẩm
+    aqi INTEGER,                       -- Chỉ số chất lượng không khí (AQI)
+    environment_index DOUBLE PRECISION -- Chỉ số môi trường tổng hợp
+);
+
 ### 3. Check Deployment Status
 **Note**: Wait until all pods are running before proceeding
 #### Check Pods Status
