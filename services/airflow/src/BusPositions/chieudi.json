@@ -1,0 +1,360 @@
+[
+  {
+    "stopId": "a676424a-ca1a-4c55-ba3b-adbcd196942c",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S1",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.03138472999851,
+    "stopLon": 105.76809909631172,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:01:52+07:00",
+    "tags": { "name": "Đối Diện Nhà CT2B KĐT Mỹ Đình - Lê Đức Thọ" }
+  },
+  {
+    "stopId": "2d9f8c11-0e44-4255-98b7-e78626c044bb",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S2",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.036071254017784,
+    "stopLon": 105.77120135776062,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:02:54+07:00",
+    "tags": {
+      "name": "Đối Diện Trung Ương Hội KHH Gia Đình Việt Nam - Lê Đức Thọ"
+    }
+  },
+  {
+    "stopId": "2bcfb008-b3b9-4910-a838-14a87436f3ab",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S3",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.037934480218265,
+    "stopLon": 105.77361313162989,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:06:10+07:00",
+    "tags": { "name": "Ga Lê Đức Thọ - Hồ Tùng Mậu" }
+  },
+  {
+    "stopId": "a25a6636-1762-4c67-a1ab-223affd7d90e",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S4",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.036677497533613,
+    "stopLon": 105.77823835333072,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:07:19+07:00",
+    "tags": { "name": "Số 9 Hồ Tùng Mậu" }
+  },
+  {
+    "stopId": "530535f6-83c0-4cfe-ab8d-5383da94348a",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S5",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.0366908079234,
+    "stopLon": 105.78210470941976,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:08:08+07:00",
+    "tags": { "name": "Số 241 Xuân Thủy (Đối Diện ĐH Quốc Gia)" }
+  },
+  {
+    "stopId": "33478cac-cc5e-4630-a588-cfc52d7b6574",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S6",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.03638270138422,
+    "stopLon": 105.78596175834664,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:08:13+07:00",
+    "tags": {
+      "name": "Siêu Thị Điện Máy Pico - 173 Xuân Thủy - Làng Vòng - Dịch Vọng Hậu"
+    }
+  },
+  {
+    "stopId": "96ef0844-ade5-40e4-a9be-315aaf52a2d5",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S7",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.036515911577986,
+    "stopLon": 105.78877990491313,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:09:09+07:00",
+    "tags": {
+      "name": "Số 79 Xuân Thủy (Đối Diện Học Viện Báo Chí Và Tuyên Truyền)"
+    }
+  },
+  {
+    "stopId": "254272c1-db97-4666-a7b7-31c324de0afe",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S8",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.03587417110285,
+    "stopLon": 105.79154496682311,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:09:45+07:00",
+    "tags": { "name": "331 Cầu Giấy" }
+  },
+  {
+    "stopId": "97b37199-d052-47c8-bb4a-f7d009bedac8",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S9",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.034958541785112,
+    "stopLon": 105.79424372264393,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:11:13+07:00",
+    "tags": { "name": "Số 271 Cầu Giấy (Ga Chùa Hà)" }
+  },
+  {
+    "stopId": "f0d440d8-7cb3-4f15-a54b-307bdb8d8d58",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S10",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.03277377380799,
+    "stopLon": 105.79885894909222,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:13:01+07:00",
+    "tags": { "name": "165 Cầu Giấy - Bưu Điện Cầu Giấy - Quan Hoa" }
+  },
+  {
+    "stopId": "7a6998cf-55ae-4ae4-a663-e228646eb9ff",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S11",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.028954538083,
+    "stopLon": 105.80433184670477,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:13:28+07:00",
+    "tags": { "name": "Điểm Trung Chuyển Cầu Giấy - GTVT 02" }
+  },
+  {
+    "stopId": "f73c195c-f779-40dd-8e04-78398c3b44f5",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S12",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.027794668132465,
+    "stopLon": 105.8092371337488,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:14:38+07:00",
+    "tags": { "name": "989-991 Đê La Thành - Ngọc Khánh" }
+  },
+  {
+    "stopId": "df03129a-888a-4da3-9e6d-13e3064e3203",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S13",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.02235773442124,
+    "stopLon": 105.80966707607692,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:17:14+07:00",
+    "tags": { "name": "Đối Diện Đại Học Luật Hà Nội - Nguyễn Chí Thanh" }
+  },
+  {
+    "stopId": "a173ea02-0eec-41d7-a05d-50d5d8f0f184",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S14",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.019251224052613,
+    "stopLon": 105.80991927422603,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:20:13+07:00",
+    "tags": { "name": "57A Huỳnh Thúc Kháng" }
+  },
+  {
+    "stopId": "4ffeca98-6522-4d24-b337-180cad8597d5",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S15",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.01743146950325,
+    "stopLon": 105.81347608640424,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:20:51+07:00",
+    "tags": { "name": "7 Huỳnh Thúc Kháng - Cạnh Đài Truyền Hình Hà Nội" }
+  },
+  {
+    "stopId": "15de7ac2-ad47-40a7-aff2-7a4bfd124b68",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S16",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.01598275987681,
+    "stopLon": 105.81627527422593,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:23:30+07:00",
+    "tags": { "name": "Trạm Biến Áp F3 Thành Công - 171 Thái Hà" }
+  },
+  {
+    "stopId": "93a77d2a-a230-4cb5-8911-e2a01ca9ad40",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S17",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.012782169143538,
+    "stopLon": 105.81891599375142,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:24:15+07:00",
+    "tags": { "name": "131 Thái Hà" }
+  },
+  {
+    "stopId": "81458639-67d0-459f-bf07-fcb9e7a71d8d",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S18",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.01015606071452,
+    "stopLon": 105.82309331285249,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:24:53+07:00",
+    "tags": { "name": "3 Thái Hà - Bể Bơi Thái Hà" }
+  },
+  {
+    "stopId": "d47a85de-08c7-432f-ad1a-ac3e98391de8",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S19",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.00882135624758,
+    "stopLon": 105.82564709565823,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:26:13+07:00",
+    "tags": { "name": "251 Chùa Bộc" }
+  },
+  {
+    "stopId": "7208e297-202c-42a0-9b11-bad7ddac1f64",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S20",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.006626779066966,
+    "stopLon": 105.8304860932537,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:27:37+07:00",
+    "tags": { "name": "19-21 Chùa Bộc" }
+  },
+  {
+    "stopId": "2f2a5946-1556-4832-b608-d679b02668eb",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S21",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.00771058505116,
+    "stopLon": 105.83275460571733,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:28:55+07:00",
+    "tags": { "name": "Siêu Thị Uni Mart - 8 Phạm Ngọc Thạch" }
+  },
+  {
+    "stopId": "9ba1d8ed-d361-414e-833d-b7d328fdd363",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S22",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.00914478745668,
+    "stopLon": 105.83541729271718,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:31:28+07:00",
+    "tags": {
+      "name": "B10 Tập Thể Kim Liên (Đối Diện Ngõ 46B Phạm Ngọc Thạch)"
+    }
+  },
+  {
+    "stopId": "95bf8b48-90b0-40ec-bfa1-18cbfed1e256",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S23",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.007932363403253,
+    "stopLon": 105.84651903798644,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:33:28+07:00",
+    "tags": { "name": "51 Đại Cồ Việt - Bách Khoa" }
+  },
+  {
+    "stopId": "6a0c33a0-4fb7-4b52-b8a4-81e03ec37c55",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S24",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.006741763087234,
+    "stopLon": 105.84823941731473,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:34:22+07:00",
+    "tags": { "name": "Đối Diện B13 Ký Túc Xá Bách Khoa - Tạ Quang Bửu" }
+  },
+  {
+    "stopId": "12a1949d-da21-4d99-b224-1f5711777a9b",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S25",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.003449700847426,
+    "stopLon": 105.84942552765894,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:36:32+07:00",
+    "tags": {
+      "name": "Đối Diện 58 Lê Thanh Nghị (Qua Ngã 4 Lê Thanh Nghị - Tạ Quang Bửu)"
+    }
+  },
+  {
+    "stopId": "b0bf03c8-5c41-4962-ad08-1992a048e5ad",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S26",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.003056853259835,
+    "stopLon": 105.85320120306149,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:36:49+07:00",
+    "tags": { "name": "263 Thanh Nhàn" }
+  },
+  {
+    "stopId": "10748ead-b7ac-4b9c-90e6-031e92ab230e",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S27",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.003030845808023,
+    "stopLon": 105.85965487792727,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:39:40+07:00",
+    "tags": { "name": "33 - 35 Thanh Nhàn - Đối Diện Bệnh Viện Thanh Nhàn" }
+  },
+  {
+    "stopId": "0a59f89a-37b7-49ac-ae49-8e17728f7998",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S28",
+    "stopTypeGroup": "bus",
+    "stopLat": 21.00227800242107,
+    "stopLon": 105.86199012765888,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:41:30+07:00",
+    "tags": { "name": "Tập Thể E6 Quỳnh Mai - Kim Ngưu" }
+  },
+  {
+    "stopId": "f14b1dab-420a-4af8-9566-b2c5d1d0a113",
+    "countryIso": "VNM",
+    "countryUrl": "vietnam",
+    "stopName": "Stop 26 1 S29",
+    "stopTypeGroup": "bus",
+    "stopLat": 20.997746192111187,
+    "stopLon": 105.86310761362972,
+    "stopDesc": "",
+    "datetime": "2025-10-11T05:42:22+07:00",
+    "tags": { "name": "Cửa Hàng Nhựa Đường Số 3 - 344 Kim Ngưu" }
+  }
+]
