@@ -1,0 +1,38 @@
+FROM apache/spark:4.0.0-python3
+
+USER root
+
+RUN apt-get update && apt-get install -y \
+    wget \
+    curl
+
+RUN apt-get update && apt-get install -y \
+    python3.11 python3.11-venv python3.11-dev python3-pip net-tools iputils-ping vim   
+
+RUN cd /usr/lib/ && ln -s -f python3.11 /usr/bin/python3 && ln -s -f python3.11 /usr/bin/python
+
+WORKDIR /opt/spark/jars
+RUN curl -O https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.4.1/hadoop-aws-3.4.1.jar \
+    && curl -O https://repo1.maven.org/maven2/software/amazon/awssdk/bundle/2.33.11/bundle-2.33.11.jar
+RUN curl -O https://repo1.maven.org/maven2/io/delta/delta-spark_2.13/4.0.0/delta-spark_2.13-4.0.0.jar \
+    && curl -O https://repo1.maven.org/maven2/io/delta/delta-storage/4.0.0/delta-storage-4.0.0.jar
+RUN chown -R spark:spark /opt/spark/jars/
+
+RUN python3 -m pip install delta-spark==4.0.0
+
+RUN mkdir -p /home/spark/ && chown -R spark:spark /home/spark/
+
+USER spark
+
+COPY airflow/src/dags "/opt/airflow/dags"
+
+RUN mkdir -p /tmp/spark-events && mkdir -p /tmp/spark-logs && mkdir -p /opt/spark/events && mkdir -p /opt/spark/logs
+
+COPY spark-defaults.conf "/opt/spark/conf/spark-defaults.conf"
+
+COPY templates/spark_k8s_executor_template.yaml "/spark/templates/spark_k8s_executor_template.yaml"
+COPY templates/spark_k8s_driver_template.yaml "/spark/templates/spark_k8s_driver_template.yaml"
+COPY templates/spark_operator_spec.json "/spark/templates/spark_operator_spec.json"
+
+# Expose port for Spark UI (optional)
+EXPOSE 4040

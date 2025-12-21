@@ -1,0 +1,39 @@
+ARG PY_SPARK_VERSION=v1
+
+FROM py-spark-spark:${PY_SPARK_VERSION} AS build
+
+FROM apache/airflow:3.1.0-python3.11 AS runtime
+
+COPY --chown=airflow:root --from=build /opt/spark/ /opt/spark/
+COPY --chown=airflow:root --from=build /home/spark/ /home/spark/
+COPY --chown=airflow:root --from=build /spark/ /spark/
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$PATH:$SPARK_HOME/bin
+
+# Install system dependencies
+USER root
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jdk \
+    wget \
+    curl \
+    net-tools iputils-ping \
+    openssh-client \
+    && rm -rf /var/lib/apt/lists/*
+
+USER airflow
+
+COPY requirements-airflow.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pip install s3fs
+RUN pip install retry-requests==2.0.0 requests-cache==1.0.1 requests==2.31.0 openmeteo-requests
+RUN pip install "urllib3<2.0.0"
+
+COPY src/dags/ "/opt/airflow/dags"
+# Create directories for logs
+RUN mkdir -p /opt/airflow/logs
+
+# Set working directory
+WORKDIR /opt/airflow
