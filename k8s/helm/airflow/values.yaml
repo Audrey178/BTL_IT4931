@@ -5,7 +5,7 @@ airflowVersion: "3.1.0"
 #   ttlSecondsAfterFinished: 300
 images:
   airflow:
-    repository: py-spark-airflow
+    repository: cuongceg/py-spark-airflow
     tag: v1
     pullPolicy: IfNotPresent
 

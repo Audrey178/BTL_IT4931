@@ -15,7 +15,7 @@ airflowVersion: "3.1.0"
 #   ttlSecondsAfterFinished: 300
 images:
   airflow:
-    repository: py-spark-airflow
+    repository: cuongceg/py-spark-airflow
     tag: $TAG
     pullPolicy: IfNotPresent
 
@@ -127,7 +127,7 @@ workers:
 # Persist Airflow logs (compose mounted ./logs)
 logs:
   persistence:
-    enabled: true
+    enabled: false
     size: 2Gi
 
 config:
