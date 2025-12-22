@@ -11,7 +11,7 @@ spec:
     imagePullPolicy: IfNotPresent
     env:
       - name: KAFKA_BROKER
-        value: "kafka-broker-1:29092"
+        value: "kafka-headless.batch.svc.cluster.local:9092"
       - name: WAREHOUSE_HOST
         value: "datawarehouse"
       - name: WAREHOUSE_PORT
