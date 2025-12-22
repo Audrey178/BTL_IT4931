@@ -23,9 +23,7 @@ spec:
           env:
             # Kafka Cluster
             - name: BOOTSTRAP_SERVERS
-              value: "kafka-broker-1:29092"
-
-            # Connect Worker group
+              value: "kafka-headless.batch.svc.cluster.local:9092"
             - name: GROUP_ID
               value: "1"
 
@@ -35,14 +33,13 @@ spec:
             - name: OFFSET_STORAGE_TOPIC
               value: "connect_offsets"
             - name: STATUS_STORAGE_TOPIC
-              value: "connect_status"
-
-            # Internal topics MUST be JSON
-            - name: CONNECT_INTERNAL_KEY_CONVERTER
-              value: "org.apache.kafka.connect.json.JsonConverter"
-            - name: CONNECT_INTERNAL_VALUE_CONVERTER
-              value: "org.apache.kafka.connect.json.JsonConverter"
-
+              value: "connect_statuses"
+            - name: CONFIG_STORAGE_REPLICATION_FACTOR
+              value: "3"
+            - name: OFFSET_STORAGE_REPLICATION_FACTOR
+              value: "3"
+            - name: STATUS_STORAGE_REPLICATION_FACTOR
+              value: "3"
             - name: KEY_CONVERTER
               value: "org.apache.kafka.connect.json.JsonConverter"
             - name: VALUE_CONVERTER
@@ -59,17 +56,19 @@ spec:
             # Plugin path (bắt buộc)
             - name: CONNECT_PLUGIN_PATH
               value: "/kafka/connect"
+            - name: HEAP_OPTS
+              value: "-Xms512M -Xmx1G"
           readinessProbe:
             httpGet:
               path: /connectors
               port: 8083
-            initialDelaySeconds: 15
+            initialDelaySeconds: 20
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /connectors
               port: 8083
-            initialDelaySeconds: 30
+            initialDelaySeconds: 60
             periodSeconds: 20
 ---
 apiVersion: v1

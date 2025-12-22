@@ -22,19 +22,26 @@ spec:
         - containerPort: 8080
         env:
         - name: KAFKA_CLUSTERS_0_NAME
-          value: "local"
+          value: "k8s-data-cluster"
         - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
-          value: "kafka-broker-1:29092"
+          value: "kafka-headless.batch.svc.cluster.local:9092"
         - name: KAFKA_CLUSTERS_0_ZOOKEEPER
-          value: "zookeeper-1:2181"
+          value: "zookeeper-headless.batch.svc.cluster.local:2181"
         - name: KAFKA_CLUSTERS_0_SCHEMAREGISTRY
-          value: "http://schema-registry:8081"   # thêm biến này
+          value: "http://schema-registry.batch.svc.cluster.local:8081"
         - name: AUTH_TYPE
           value: "LOGIN_FORM"
         - name: SPRING_SECURITY_USER_NAME
           value: "admin"
         - name: SPRING_SECURITY_USER_PASSWORD
           value: "admin123"
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
 ---
 apiVersion: v1
 kind: Service
