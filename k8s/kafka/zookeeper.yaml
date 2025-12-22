@@ -78,13 +78,13 @@ spec:
           value: "10"
         - name: ZOOKEEPER_SYNC_LIMIT
           value: "5"
-        # Mở khóa các lệnh quản trị 4 chữ (Four Letter Words) để debug sau này
+        # Add all 4-letter word commands to the whitelist
         - name: ZOOKEEPER_4LW_COMMANDS_WHITELIST
           value: "*"
         - name: ZOOKEEPER_SERVERS
           value: "zookeeper-0.zookeeper-headless.batch.svc.cluster.local:2888:3888;zookeeper-1.zookeeper-headless.batch.svc.cluster.local:2888:3888;zookeeper-2.zookeeper-headless.batch.svc.cluster.local:2888:3888"
         
-        # --- THAY ĐỔI QUAN TRỌNG: Dùng TCP Socket thay vì Exec Command ---
+        # Use readiness and liveness probes to monitor Zookeeper health
         readinessProbe:
           tcpSocket:
             port: 2181

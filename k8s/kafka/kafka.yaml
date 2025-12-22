@@ -60,13 +60,13 @@ spec:
           value: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
         - name: KAFKA_INTER_BROKER_LISTENER_NAME
           value: "PLAINTEXT"
-        # Cấu hình dynamic hostname cho từng Pod trong StatefulSet
+        # Configure advertised listeners for each broker
         - name: KAFKA_ADVERTISED_LISTENERS
           value: "PLAINTEXT://$(POD_NAME).kafka-headless.batch.svc.cluster.local:9092"
-        # Tự động sinh Broker ID dựa trên tên Pod (kafka-0 -> 0, kafka-1 -> 1)
+        # Auto generate broker ID based on the pod's ordinal index
         - name: KAFKA_BROKER_ID_GENERATION_ENABLE
           value: "true"
-        # CẤU HÌNH CHỊU LỖI (FAULT TOLERANCE)
+        # Configure topic replication factors
         - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
           value: "3"
         - name: KAFKA_DEFAULT_REPLICATION_FACTOR
@@ -75,7 +75,7 @@ spec:
           value: "2"
         - name: KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL
           value: "http://schema-registry:8081"
-        # Tăng thời gian chờ để tránh crash khi khởi động nặng
+        # Increase timeout to avoid crash on heavy startup
         readinessProbe:
           tcpSocket:
             port: 9092
