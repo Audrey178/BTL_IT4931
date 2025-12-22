@@ -66,6 +66,13 @@ kubectl apply -f kafka/kafka-ui.yaml
 kubectl apply -f debezium-connect.yaml
 ```
 
+**6. Deploy airflow and spark:**
+```bash
+chmod +x k8s/helm/scripts/create_spark.sh
+chmod +x k8s/helm/scripts/create_airflow.sh
+./k8s/helm/scripts/create_spark.sh py-spark
+./k8s/helm/scripts/create_airflow.sh batch v1
+```
 #### Step 3: Deploy Minio
 ```bash
 kubectl apply -f minio.yaml
