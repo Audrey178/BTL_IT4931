@@ -1,56 +1,83 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
-  name: kafka-broker-1
+  name: kafka-headless
   namespace: batch
   labels:
-    app: kafka-broker-1
+    app: kafka
 spec:
-  replicas: 1
+  ports:
+  - port: 9092
+    name: internal
+  clusterIP: None
+  selector:
+    app: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+  namespace: batch
+  labels:
+    app: kafka
+spec:
+  ports:
+  - port: 9092
+    name: internal
+    targetPort: 9092
+  selector:
+    app: kafka
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: batch
+spec:
   selector:
     matchLabels:
-      app: kafka-broker-1
+      app: kafka
+  serviceName: kafka-headless
+  replicas: 3
   template:
     metadata:
       labels:
-        app: kafka-broker-1
+        app: kafka
     spec:
-      hostname: kafka-broker-1
       containers:
       - name: kafka
         image: confluentinc/cp-kafka:7.6.0
         ports:
         - containerPort: 9092
-        - containerPort: 29092
         env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         - name: KAFKA_ZOOKEEPER_CONNECT
-          value: "zookeeper-1:2181"
+          value: "zookeeper-0.zookeeper-headless.batch.svc.cluster.local:2181,zookeeper-1.zookeeper-headless.batch.svc.cluster.local:2181,zookeeper-2.zookeeper-headless.batch.svc.cluster.local:2181"
         - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
           value: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
         - name: KAFKA_INTER_BROKER_LISTENER_NAME
           value: "PLAINTEXT"
+        # Cấu hình dynamic hostname cho từng Pod trong StatefulSet
         - name: KAFKA_ADVERTISED_LISTENERS
-          value: "PLAINTEXT://kafka-broker-1:29092,PLAINTEXT_HOST://kafka-broker-1:9092"
-        - name: KAFKA_BROKER_ID
-          value: "1"
-        - name : KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
-          value: "1"
-        - name : KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL
+          value: "PLAINTEXT://$(POD_NAME).kafka-headless.batch.svc.cluster.local:9092"
+        # Tự động sinh Broker ID dựa trên tên Pod (kafka-0 -> 0, kafka-1 -> 1)
+        - name: KAFKA_BROKER_ID_GENERATION_ENABLE
+          value: "true"
+        # CẤU HÌNH CHỊU LỖI (FAULT TOLERANCE)
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "3"
+        - name: KAFKA_DEFAULT_REPLICATION_FACTOR
+          value: "3"
+        - name: KAFKA_MIN_INSYNC_REPLICAS
+          value: "2"
+        - name: KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL
           value: "http://schema-registry:8081"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: kafka-broker-1
-  namespace: batch
-spec:
-  ports:
-  - name: external
-    port: 9092
-    targetPort: 9092
-  - name: internal
-    port: 29092
-    targetPort: 29092
-  selector:
-    app: kafka-broker-1
-  type: ClusterIP
+        # Tăng thời gian chờ để tránh crash khi khởi động nặng
+        readinessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 30
+          periodSeconds: 10

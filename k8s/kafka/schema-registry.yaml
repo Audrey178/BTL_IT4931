@@ -38,10 +38,12 @@ spec:
         - containerPort: 8081
         imagePullPolicy: Always
         env:
+        - name: SCHEMA_REGISTRY_HEAP_OPTS
+          value: "-Xms512M -Xmx512M"
         - name: SCHEMA_REGISTRY_HOST_NAME
           value: schema-registry
         - name: SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS
-          value: "kafka-broker-1:29092"
+          value: "kafka-0.kafka-headless.batch.svc.cluster.local:9092,kafka-1.kafka-headless.batch.svc.cluster.local:9092,kafka-2.kafka-headless.batch.svc.cluster.local:9092"
         - name: compatibilityLevel
           value: NONE
         - name: SCHEMA_REGISTRY_LISTENERS
