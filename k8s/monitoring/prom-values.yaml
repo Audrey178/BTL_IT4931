@@ -1,0 +1,41 @@
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+coreDns:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    nodeSelector:
+      kubernetes.io/hostname: big-data-node-2
+    
+    resources:
+      requests:
+        memory: 500Mi
+        cpu: 500m
+      limits:
+        memory: 1Gi
+        cpu: 800m
+    
+    # Retention ngắn để tiết kiệm disk của Node 2
+    retention: 5d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path 
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+
+grafana:
+  nodeSelector:
+    kubernetes.io/hostname: big-data-node-2
+  adminPassword: "admin"
+  persistence:
+    enabled: true
+    storageClassName: local-path
+    size: 5Gi

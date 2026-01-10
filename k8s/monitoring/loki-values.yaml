@@ -1,0 +1,26 @@
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: 'filesystem'
+  
+  nodeSelector:
+    kubernetes.io/hostname: big-data-node-2
+
+  persistence:
+    enabled: true
+    storageClassName: local-path
+    size: 10Gi
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+promtail:
+  enabled: true
+  config:
+    snippets:
+      pipelineStages:
+        - docker: {}
