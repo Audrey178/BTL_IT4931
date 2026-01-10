@@ -12,6 +12,15 @@ spec:
     - ReadWriteOnce
   hostPath:
     path: "/mnt/volume_sgp1_01/datalake-data"
+  # use node 1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - big-data
 
 ---
 apiVersion: v1
@@ -37,6 +46,8 @@ metadata:
     app: datalake
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: datalake
@@ -45,6 +56,17 @@ spec:
       labels:
         app: datalake
     spec:
+      # use node 1
+      nodeSelector:
+        node-role.kubernetes.io/manager: "true"
+      
+      # Security Context (User 1000)
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+
       containers:
         - name: postgresql
           image: debezium/postgres:13
@@ -57,6 +79,16 @@ spec:
               value: "admin"
             - name: POSTGRES_PASSWORD
               value: "admin123"
+          
+          # Giới hạn tài nguyên
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+
           volumeMounts:
             - name: postgresql-data
               mountPath: /var/lib/postgresql/data

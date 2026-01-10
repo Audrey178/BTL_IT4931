@@ -1,12 +1,3 @@
----
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: local-slow
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
-
----
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -19,6 +10,15 @@ spec:
   storageClassName: local-slow
   hostPath:
     path: /mnt/volume_sgp1_01/minio-data
+  # declare node affinity to bind PV to specific node
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - big-data  
 
 ---
 apiVersion: v1
@@ -44,6 +44,8 @@ metadata:
     app: minio
 spec:
   replicas: 1
+  strategy:
+    type: Recreate # Bắt buộc với ReadWriteOnce/HostPath để tránh lỗi lock file
   selector:
     matchLabels:
       app: minio
@@ -52,6 +54,21 @@ spec:
       labels:
         app: minio
     spec:
+      # use node 1
+      nodeSelector:
+        node-role.kubernetes.io/manager: "true"
+
+      # use init container to fix permissions of old data
+      initContainers:
+      - name: fix-permissions
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /data"]
+        volumeMounts:
+        - name: minio-data
+          mountPath: /data
+        securityContext:
+          runAsUser: 0 # Chạy init container bằng quyền root để có thể sửa quyền file
+
       containers:
       - name: minio
         image: quay.io/minio/minio:latest
@@ -61,15 +78,21 @@ spec:
           value: "minio"
         - name: MINIO_ROOT_PASSWORD
           value: "minio123"
-            # - name: MINIO_SERVER_URL
-            #value: "http://143.198.193.67:9000"        
-            #- name: MINIO_BROWSER_REDIRECT_URL
-            #value: "http://143.198.193.67:9001"
         ports:
         - name: api
           containerPort: 9000
         - name: console
           containerPort: 9001
+        
+        # set resource requests and limits
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+            
         volumeMounts:
         - name: minio-data
           mountPath: /data
@@ -85,6 +108,7 @@ spec:
             port: 9000
           initialDelaySeconds: 30
           periodSeconds: 20
+          
       volumes:
       - name: minio-data
         persistentVolumeClaim:
